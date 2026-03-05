@@ -28,14 +28,17 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
 
   // ── Enumerate audio inputs ─────────────────────────────
   useEffect(() => {
-    // Request mic permission so labels are populated
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((stream) => {
+    async function loadDevices() {
+      try {
+        // Try getting permission first
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
         stream.getTracks().forEach((t) => t.stop())
-        return navigator.mediaDevices.enumerateDevices()
-      })
-      .then((devs) => {
+      } catch (err) {
+        console.warn('[settings] getUserMedia failed, trying enumerate anyway:', err)
+      }
+
+      try {
+        const devs = await navigator.mediaDevices.enumerateDevices()
         const inputs = devs
           .filter((d) => d.kind === 'audioinput')
           .map((d, i) => ({
@@ -43,12 +46,14 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
             label: d.label || `Microphone ${i + 1}`
           }))
         setDevices(inputs)
-        // Default to first device if stored value is missing
         if (!initialDeviceId && inputs.length > 0) {
           setDeviceId(inputs[0].deviceId)
         }
-      })
-      .catch(() => {/* mic denied — leave list empty */})
+      } catch (err) {
+        console.error('[settings] enumerateDevices failed:', err)
+      }
+    }
+    loadDevices()
   }, [initialDeviceId])
 
   // ── Key recorder ──────────────────────────────────────
@@ -77,8 +82,21 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
         ArrowLeft: 'Left', ArrowRight: 'Right',
         Escape: 'Escape', Tab: 'Tab', Enter: 'Return',
         Backspace: 'Backspace', Delete: 'Delete',
+        '\\': 'Backslash', '/': 'Slash',
+        '[': 'BracketLeft', ']': 'BracketRight',
+        '`': 'Backquote', '-': 'Minus', '=': 'Equal',
+        ';': 'Semicolon', "'": 'Quote', ',': 'Comma',
+        '.': 'Period',
       }
-      const mapped = keyMap[e.key] ?? (e.key.length === 1 ? e.key.toUpperCase() : e.key)
+      // Use e.code for reliable mapping of symbol keys
+      const codeMap: Record<string, string> = {
+        Backquote: 'Backquote', Minus: 'Minus', Equal: 'Equal',
+        BracketLeft: 'BracketLeft', BracketRight: 'BracketRight',
+        Backslash: 'Backslash', Semicolon: 'Semicolon',
+        Quote: 'Quote', Comma: 'Comma', Period: 'Period',
+        Slash: 'Slash',
+      }
+      const mapped = keyMap[e.key] ?? codeMap[e.code] ?? (e.key.length === 1 ? e.key.toUpperCase() : e.key)
       modifiers.push(mapped)
       setHotkey(modifiers.join('+'))
       setRecording(false)
@@ -128,6 +146,16 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
           <div className={styles.subtitle}>Settings</div>
         </div>
         <div className={styles.version}>v1.0</div>
+        <button
+          className={styles.closeBtn}
+          onClick={() => window.electronAPI.closeWindow()}
+          title="Close"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
       </header>
 
       {/* API Key */}

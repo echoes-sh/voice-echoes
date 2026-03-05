@@ -5,6 +5,7 @@ declare global {
     electronAPI: {
       onRecorderStart: (cb: () => void) => void
       onRecorderStop: (cb: () => void) => void
+      onRecorderCancel: (cb: () => void) => void
       audioReady: (payload: {
         buffer: ArrayBuffer
         mimeType: string
@@ -12,6 +13,7 @@ declare global {
 
       settingsGet: () => Promise<{ apiKey: string; hotkey: string; deviceId: string }>
       settingsSave: (apiKey: string, hotkey: string, deviceId: string) => Promise<{ error?: string }>
+      closeWindow: () => void
     }
   }
 }

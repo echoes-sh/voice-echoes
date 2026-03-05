@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen } from 'electron'
+import { app, BrowserWindow, screen, session } from 'electron'
 
 // Disable GPU in WSL2 — avoids GPU process crash errors, falls back to software rendering
 app.commandLine.appendSwitch('disable-gpu')
@@ -48,8 +48,9 @@ function createPill(): BrowserWindow {
     }
   })
 
-  if (process.env.NODE_ENV === 'development') {
-    win.loadURL('http://localhost:5173')
+  const devUrl = process.env.ELECTRON_RENDERER_URL
+  if (devUrl) {
+    win.loadURL(devUrl)
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -72,9 +73,9 @@ export function openSettings(): void {
 
   settingsWin = new BrowserWindow({
     width: 460,
-    height: 475,
+    height: 520,
     x: ox + Math.round((sw - 480) / 2),
-    y: oy + Math.round((sh - 490) / 2),
+    y: oy + Math.round((sh - 540) / 2),
     frame: false,
     transparent: true,
     resizable: false,
@@ -89,8 +90,9 @@ export function openSettings(): void {
     }
   })
 
-  if (process.env.NODE_ENV === 'development') {
-    settingsWin.loadURL('http://localhost:5173/#settings')
+  const devUrl = process.env.ELECTRON_RENDERER_URL
+  if (devUrl) {
+    settingsWin.loadURL(`${devUrl}#settings`)
   } else {
     settingsWin.loadFile(join(__dirname, '../renderer/index.html'), { hash: 'settings' })
   }
@@ -110,6 +112,17 @@ export function openSettings(): void {
 }
 
 app.whenReady().then(() => {
+  // Allow microphone access for the renderer
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
+    const allowed = ['media', 'microphone', 'audioCapture']
+    callback(allowed.includes(permission))
+  })
+  session.defaultSession.setPermissionCheckHandler((_wc, permission) => {
+    const allowed = ['media', 'microphone', 'audioCapture']
+    return allowed.includes(permission)
+  })
+  session.defaultSession.setDevicePermissionHandler(() => true)
+
   pill = createPill()
 
   setupTray(pill)

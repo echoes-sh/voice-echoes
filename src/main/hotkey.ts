@@ -5,6 +5,7 @@ type AppState = 'idle' | 'recording' | 'processing'
 
 let state: AppState = 'idle'
 let activeWindowId: string | null = null
+let cancelShortcutRegistered = false
 
 export function getState(): AppState {
   return state
@@ -19,6 +20,8 @@ export function getActiveWindowId(): string | null {
 }
 
 export function setupHotkey(pill: BrowserWindow): void {
+  // Keeps in-memory registration state aligned after globalShortcut.unregisterAll()
+  cancelShortcutRegistered = false
   const key = process.env.HOTKEY || 'Ctrl+Shift+Space'
 
   try {
@@ -36,6 +39,37 @@ export function setupHotkey(pill: BrowserWindow): void {
   }
 }
 
+function getCancelHotkey(): string {
+  return process.env.CANCEL_HOTKEY || 'Ctrl+C'
+}
+
+function registerCancelHotkey(pill: BrowserWindow): void {
+  if (cancelShortcutRegistered) return
+
+  const key = getCancelHotkey()
+  try {
+    const ok = globalShortcut.register(key, () => {
+      handleCancelHotkey(pill)
+    })
+    if (!ok) {
+      console.error(`[hotkey] Cancel key "${key}" is already claimed by another app`)
+      return
+    }
+    cancelShortcutRegistered = true
+    console.log(`[hotkey] Cancel shortcut active: ${key}`)
+  } catch (err) {
+    console.error(`[hotkey] Invalid cancel accelerator "${key}":`, (err as Error).message)
+  }
+}
+
+function unregisterCancelHotkey(): void {
+  if (!cancelShortcutRegistered) return
+  const key = getCancelHotkey()
+  globalShortcut.unregister(key)
+  cancelShortcutRegistered = false
+  console.log(`[hotkey] Cancel shortcut disabled: ${key}`)
+}
+
 function handleHotkey(pill: BrowserWindow): void {
   console.log('[hotkey] fired, state:', state)
 
@@ -45,10 +79,22 @@ function handleHotkey(pill: BrowserWindow): void {
     activeWindowId = captureActiveWindow()
     console.log('[hotkey] captured window:', activeWindowId)
     state = 'recording'
+    registerCancelHotkey(pill)
     pill.showInactive()
     pill.webContents.send('recorder:start')
   } else if (state === 'recording') {
     state = 'processing'
+    unregisterCancelHotkey()
     pill.webContents.send('recorder:stop')
   }
+}
+
+function handleCancelHotkey(pill: BrowserWindow): void {
+  console.log('[hotkey] cancel fired, state:', state)
+  if (state !== 'recording') return
+
+  unregisterCancelHotkey()
+  state = 'idle'
+  pill.webContents.send('recorder:cancel')
+  pill.hide()
 }

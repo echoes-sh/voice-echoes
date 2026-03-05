@@ -11,6 +11,12 @@ export default function App() {
   const streamRef = useRef<MediaStream | null>(null)
   const waveformRef = useRef<WaveformHandle | null>(null)
 
+  const cleanupMic = useCallback(() => {
+    waveformRef.current?.stop()
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+  }, [])
+
   // Load persisted device ID on mount
   useEffect(() => {
     window.electronAPI.settingsGet().then((s) => {
@@ -29,11 +35,10 @@ export default function App() {
 
     setVisible(false)
     setPillState('idle')
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
-  }, [])
+    cleanupMic()
+  }, [cleanupMic])
 
-  const { startRecording, stopRecording } = useRecorder(handleAudioReady)
+  const { startRecording, stopRecording, cancelRecording } = useRecorder(handleAudioReady)
 
   const startMic = useCallback(async () => {
     try {
@@ -54,10 +59,18 @@ export default function App() {
     }
   }, [startRecording, deviceId])
 
+  const cancelMic = useCallback(() => {
+    cancelRecording()
+    cleanupMic()
+    setVisible(false)
+    setPillState('idle')
+  }, [cancelRecording, cleanupMic])
+
   useEffect(() => {
     window.electronAPI.onRecorderStart(() => startMic())
     window.electronAPI.onRecorderStop(() => stopRecording())
-  }, [startMic, stopRecording])
+    window.electronAPI.onRecorderCancel(() => cancelMic())
+  }, [startMic, stopRecording, cancelMic])
 
   return (
     <Pill

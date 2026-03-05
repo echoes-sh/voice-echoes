@@ -24,19 +24,18 @@ export async function transcribeAudio(
   const ext = mimeType.includes('ogg') ? 'ogg'
     : mimeType.includes('mp4') ? 'mp4'
     : mimeType.includes('webm') ? 'webm'
+    : mimeType.includes('wav') ? 'wav'
     : 'webm'
 
-  const blob = new Blob([buffer], { type: mimeType })
-  const audioFile = await toFile(blob, `recording.${ext}`, { type: mimeType })
+  const nodeBuffer = Buffer.from(buffer)
+  const file = await toFile(nodeBuffer, `recording.${ext}`, { type: mimeType || 'audio/webm' })
 
   const result = await openai.audio.transcriptions.create({
     model: 'whisper-1',
-    file: audioFile,
-    language: undefined, // auto-detect French + English
+    file,
     response_format: 'text'
   })
 
-  // response_format: 'text' returns a string directly
   const text = (result as unknown as string).trim()
   return text || null
 }

@@ -3,6 +3,7 @@ import { useRef, useCallback } from 'react'
 interface UseRecorderReturn {
   startRecording: (stream: MediaStream) => void
   stopRecording: () => void
+  cancelRecording: () => void
 }
 
 export function useRecorder(
@@ -10,9 +11,11 @@ export function useRecorder(
 ): UseRecorderReturn {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const discardOnStopRef = useRef(false)
 
   const startRecording = useCallback((stream: MediaStream) => {
     chunksRef.current = []
+    discardOnStopRef.current = false
 
     const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
       ? 'audio/webm;codecs=opus'
@@ -29,9 +32,13 @@ export function useRecorder(
 
     recorder.onstop = () => {
       const finalMimeType = recorder.mimeType || 'audio/webm'
-      const blob = new Blob(chunksRef.current, { type: finalMimeType })
-      onAudioReady(blob, finalMimeType)
+      if (!discardOnStopRef.current) {
+        const blob = new Blob(chunksRef.current, { type: finalMimeType })
+        onAudioReady(blob, finalMimeType)
+      }
+      discardOnStopRef.current = false
       chunksRef.current = []
+      mediaRecorderRef.current = null
     }
 
     recorder.start(100)
@@ -43,5 +50,15 @@ export function useRecorder(
     }
   }, [])
 
-  return { startRecording, stopRecording }
+  const cancelRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      discardOnStopRef.current = true
+      mediaRecorderRef.current.stop()
+      return
+    }
+    discardOnStopRef.current = false
+    chunksRef.current = []
+  }, [])
+
+  return { startRecording, stopRecording, cancelRecording }
 }

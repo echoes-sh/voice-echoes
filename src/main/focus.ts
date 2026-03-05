@@ -1,12 +1,19 @@
-import { execFileSync, spawn } from 'child_process'
+import { execFileSync, execSync, spawn } from 'child_process'
+import { clipboard } from 'electron'
+
+const isWin = process.platform === 'win32'
 
 /**
- * Returns the active X11 window ID before the pill is shown.
- * Returns null if xdotool is not available or fails.
+ * Returns an identifier for the active window before the pill is shown.
+ * On Linux uses xdotool, on Windows returns a placeholder (we use clipboard paste instead).
  */
 export function captureActiveWindow(): string | null {
+  if (isWin) {
+    // On Windows we use clipboard-based paste, no window ID needed
+    return 'win-clipboard'
+  }
+
   try {
-    // execFileSync (not exec/execSync) — no shell interpolation
     const id = execFileSync('xdotool', ['getactivewindow'], { encoding: 'utf8' }).trim()
     return id || null
   } catch {
@@ -16,14 +23,28 @@ export function captureActiveWindow(): string | null {
 }
 
 /**
- * Types text into the given window using xdotool via stdin.
- * Uses spawn + stdin to avoid shell-quoting issues with special chars (é, à, etc).
- * The windowId comes from xdotool itself (no user-controlled input in args).
- * Text is written to stdin, never interpolated into the command.
+ * Types text into the previously active window.
+ * On Windows: copies text to clipboard and simulates Ctrl+V via PowerShell.
+ * On Linux: uses xdotool via stdin.
  */
 export function typeIntoWindow(windowId: string, text: string): Promise<void> {
+  if (isWin) {
+    return new Promise((resolve, reject) => {
+      try {
+        clipboard.writeText(text)
+        // Use PowerShell to send Ctrl+V to the foreground app
+        execSync(
+          'powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^v\')"',
+          { timeout: 5000 }
+        )
+        resolve()
+      } catch (err) {
+        reject(err)
+      }
+    })
+  }
+
   return new Promise((resolve, reject) => {
-    // Arguments are an array — no shell, no injection risk
     const proc = spawn('xdotool', [
       'windowfocus', '--sync', windowId,
       'type', '--clearmodifiers', '--delay', '12', '--window', windowId, '--'
@@ -33,15 +54,10 @@ export function typeIntoWindow(windowId: string, text: string): Promise<void> {
     proc.stdin.end()
 
     proc.on('close', (code) => {
-      if (code === 0) {
-        resolve()
-      } else {
-        reject(new Error(`xdotool exited with code ${code}`))
-      }
+      if (code === 0) resolve()
+      else reject(new Error(`xdotool exited with code ${code}`))
     })
 
-    proc.on('error', (err) => {
-      reject(err)
-    })
+    proc.on('error', reject)
   })
 }

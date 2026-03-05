@@ -26,6 +26,7 @@
   border: 1px solid #262626;
   border-radius: 12px;
   flex-shrink: 0;
+  -webkit-app-region: drag;
 }
 
 .logoWrap {
@@ -67,6 +68,27 @@
   color: #404040;
   font-family: 'Geist Mono', monospace;
   letter-spacing: 0.02em;
+}
+
+.closeBtn {
+  -webkit-app-region: no-drag;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  color: #404040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  color: #fafafa;
+  background: #262626;
 }
 
 /* ─── Cards ─────────────────────────────────────────── */
