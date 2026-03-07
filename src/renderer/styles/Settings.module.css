@@ -12,7 +12,7 @@
   padding: 20px;
   gap: 10px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
@@ -101,6 +101,13 @@
   transition: border-color 0.15s ease;
 }
 
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .card:focus-within {
   border-color: #404040;
 }
@@ -167,6 +174,78 @@
 }
 
 .eyeBtn:hover { color: #a3a3a3; }
+
+/* ─── Usage Card ────────────────────────────────────── */
+.usageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.usageItem {
+  background: #0a0a0a;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  padding: 9px 10px;
+}
+
+.usageLabel {
+  font-size: 10px;
+  color: #525252;
+  margin-bottom: 4px;
+}
+
+.usageValue {
+  font-size: 12px;
+  font-weight: 500;
+  color: #fafafa;
+  letter-spacing: 0.01em;
+}
+
+.usageFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.usageMeta {
+  font-size: 10.5px;
+  color: #525252;
+}
+
+.usageBtn {
+  background: #1a1a1a;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: 'Geist', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #a3a3a3;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.usageBtn:hover {
+  border-color: #404040;
+  color: #fafafa;
+  background: #202020;
+}
+
+.usageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.usageError {
+  margin-top: 9px;
+  font-size: 10.5px;
+  color: #ef4444;
+}
 
 /* ─── Mic Select ────────────────────────────────────── */
 .selectWrap {

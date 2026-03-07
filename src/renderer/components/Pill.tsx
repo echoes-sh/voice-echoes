@@ -1,24 +1,40 @@
-import { useRef } from 'react'
 import styles from '../styles/Pill.module.css'
-import Waveform, { WaveformHandle } from './Waveform'
+import { LiveWaveform } from './LiveWaveform'
 
 export type PillState = 'idle' | 'recording' | 'processing'
 
 interface PillProps {
   state: PillState
   visible: boolean
-  streamRef: React.RefObject<MediaStream | null>
-  waveformRef: React.RefObject<WaveformHandle | null>
+  deviceId: string
+  onStreamReady: (stream: MediaStream) => void
+  onStreamEnd: () => void
 }
 
-export default function Pill({ state, visible, waveformRef }: PillProps) {
+export default function Pill({ state, visible, deviceId, onStreamReady, onStreamEnd }: PillProps) {
   if (!visible) return null
 
   return (
     <div className={styles.pill}>
       <div className={`${styles.dot} ${styles[state]}`} />
       <div className={styles.waveformContainer}>
-        <Waveform ref={waveformRef} />
+        <LiveWaveform
+          active={state === 'recording'}
+          processing={state === 'processing'}
+          deviceId={deviceId}
+          height="100%"
+          barWidth={2}
+          barGap={1}
+          barRadius={1}
+          barColor="rgba(255, 255, 255, 0.9)"
+          fadeEdges={true}
+          fadeWidth={12}
+          sensitivity={1.2}
+          mode="static"
+          onStreamReady={onStreamReady}
+          onStreamEnd={onStreamEnd}
+          onError={(err) => console.error('[LiveWaveform] mic error:', err)}
+        />
       </div>
     </div>
   )

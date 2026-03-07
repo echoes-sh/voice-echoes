@@ -1,6 +1,6 @@
 {
   "name": "voice-echoes",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Voice-to-text desktop app with system tray",
   "main": "out/main/index.js",
   "scripts": {

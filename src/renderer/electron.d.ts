@@ -12,6 +12,16 @@ declare global {
       }) => Promise<{ text: string | null; error: string | null }>
 
       settingsGet: () => Promise<{ apiKey: string; hotkey: string; deviceId: string }>
+      settingsUsage: (apiKey?: string) => Promise<{
+        creditsGrantedUsd: number | null
+        creditsUsedUsd: number | null
+        creditsRemainingUsd: number | null
+        monthUsageUsd: number | null
+        periodStart: string
+        periodEnd: string
+        fetchedAt: string
+        error?: string
+      }>
       settingsSave: (apiKey: string, hotkey: string, deviceId: string) => Promise<{ error?: string }>
       closeWindow: () => void
     }

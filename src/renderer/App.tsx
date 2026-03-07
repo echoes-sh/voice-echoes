@@ -1,21 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Pill, { PillState } from './components/Pill'
-import { WaveformHandle } from './components/Waveform'
 import { useRecorder } from './hooks/useRecorder'
 
 export default function App() {
   const [pillState, setPillState] = useState<PillState>('idle')
   const [visible, setVisible] = useState(false)
   const [deviceId, setDeviceId] = useState<string>('default')
-
-  const streamRef = useRef<MediaStream | null>(null)
-  const waveformRef = useRef<WaveformHandle | null>(null)
-
-  const cleanupMic = useCallback(() => {
-    waveformRef.current?.stop()
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
-  }, [])
 
   // Load persisted device ID on mount
   useEffect(() => {
@@ -26,7 +16,6 @@ export default function App() {
 
   const handleAudioReady = useCallback(async (blob: Blob, mimeType: string) => {
     setPillState('processing')
-    waveformRef.current?.stop()
 
     const buffer = await blob.arrayBuffer()
     const result = await window.electronAPI.audioReady({ buffer, mimeType })
@@ -35,36 +24,24 @@ export default function App() {
 
     setVisible(false)
     setPillState('idle')
-    cleanupMic()
-  }, [cleanupMic])
+  }, [])
 
   const { startRecording, stopRecording, cancelRecording } = useRecorder(handleAudioReady)
 
-  const startMic = useCallback(async () => {
-    try {
-      const constraints: MediaStreamConstraints = {
-        audio: deviceId && deviceId !== 'default'
-          ? { deviceId: { exact: deviceId } }
-          : true,
-        video: false
-      }
-      const stream = await navigator.mediaDevices.getUserMedia(constraints)
-      streamRef.current = stream
-      waveformRef.current?.start(stream)
-      startRecording(stream)
-      setPillState('recording')
-      setVisible(true)
-    } catch (err) {
-      console.error('[App] mic access failed:', err)
-    }
-  }, [startRecording, deviceId])
+  const handleStreamReady = useCallback((stream: MediaStream) => {
+    startRecording(stream)
+  }, [startRecording])
+
+  const startMic = useCallback(() => {
+    setPillState('recording')
+    setVisible(true)
+  }, [])
 
   const cancelMic = useCallback(() => {
     cancelRecording()
-    cleanupMic()
     setVisible(false)
     setPillState('idle')
-  }, [cancelRecording, cleanupMic])
+  }, [cancelRecording])
 
   useEffect(() => {
     window.electronAPI.onRecorderStart(() => startMic())
@@ -76,8 +53,9 @@ export default function App() {
     <Pill
       state={pillState}
       visible={visible}
-      streamRef={streamRef}
-      waveformRef={waveformRef}
+      deviceId={deviceId}
+      onStreamReady={handleStreamReady}
+      onStreamEnd={() => {}}
     />
   )
 }

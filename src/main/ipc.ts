@@ -4,9 +4,14 @@ import { transcribeAudio } from './transcribe'
 import { typeIntoWindow } from './focus'
 import { getActiveWindowId, setState, setupHotkey } from './hotkey'
 import { readSettings, writeSettings } from './settings'
+import { fetchOpenAIUsage } from './openai-usage'
 
 export function registerIpcHandlers(pill: BrowserWindow): void {
   ipcMain.handle('settings:get', () => readSettings())
+
+  ipcMain.handle('settings:usage', (_event, apiKey?: string) => {
+    return fetchOpenAIUsage(apiKey)
+  })
 
   ipcMain.on('window:close', (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close()

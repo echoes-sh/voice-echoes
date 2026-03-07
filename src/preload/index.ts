@@ -22,6 +22,18 @@ const electronAPI = {
   settingsGet: (): Promise<{ apiKey: string; hotkey: string; deviceId: string }> => {
     return ipcRenderer.invoke('settings:get')
   },
+  settingsUsage: (apiKey?: string): Promise<{
+    creditsGrantedUsd: number | null
+    creditsUsedUsd: number | null
+    creditsRemainingUsd: number | null
+    monthUsageUsd: number | null
+    periodStart: string
+    periodEnd: string
+    fetchedAt: string
+    error?: string
+  }> => {
+    return ipcRenderer.invoke('settings:usage', apiKey)
+  },
   settingsSave: (apiKey: string, hotkey: string, deviceId: string): Promise<{ error?: string }> => {
     return ipcRenderer.invoke('settings:save', apiKey, hotkey, deviceId)
   },

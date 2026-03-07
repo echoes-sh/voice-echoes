@@ -15,6 +15,17 @@ interface AudioDevice {
 
 type StatusState = { type: 'success' | 'error'; message: string } | null
 
+interface OpenAIUsageSnapshot {
+  creditsGrantedUsd: number | null
+  creditsUsedUsd: number | null
+  creditsRemainingUsd: number | null
+  monthUsageUsd: number | null
+  periodStart: string
+  periodEnd: string
+  fetchedAt: string
+  error?: string
+}
+
 export default function Settings({ initialKey, initialHotkey, initialDeviceId, onSave }: SettingsProps) {
   const [apiKey, setApiKey]     = useState(initialKey)
   const [hotkey, setHotkey]     = useState(initialHotkey || 'F13')
@@ -24,7 +35,25 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
   const [recording, setRecording] = useState(false)
   const [status, setStatus]     = useState<StatusState>(null)
   const [saving, setSaving]     = useState(false)
+  const [usage, setUsage]       = useState<OpenAIUsageSnapshot | null>(null)
+  const [usageError, setUsageError] = useState<string | null>(null)
+  const [usageLoading, setUsageLoading] = useState(false)
   const hotkeyInputRef = useRef<HTMLInputElement>(null)
+
+  const formatUsd = useCallback((value: number | null) => {
+    if (value === null) return '—'
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 2
+    }).format(value)
+  }, [])
+
+  const formatDateTime = useCallback((iso: string) => {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return 'Unknown'
+    return d.toLocaleString()
+  }, [])
 
   // ── Enumerate audio inputs ─────────────────────────────
   useEffect(() => {
@@ -55,6 +84,25 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
     }
     loadDevices()
   }, [initialDeviceId])
+
+  const refreshUsage = useCallback(async (targetApiKey: string) => {
+    setUsageLoading(true)
+    setUsageError(null)
+    try {
+      const snapshot = await window.electronAPI.settingsUsage(targetApiKey.trim())
+      setUsage(snapshot)
+      setUsageError(snapshot.error ?? null)
+    } catch (err) {
+      setUsageError((err as Error).message)
+    } finally {
+      setUsageLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!initialKey.trim()) return
+    void refreshUsage(initialKey)
+  }, [initialKey, refreshUsage])
 
   // ── Key recorder ──────────────────────────────────────
   const startRecording = useCallback(() => {
@@ -121,6 +169,7 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
         setStatus({ type: 'error', message: result.error })
       } else {
         setStatus({ type: 'success', message: 'Settings saved' })
+        void refreshUsage(apiKey)
         setTimeout(() => setStatus(null), 3000)
       }
     } catch (err) {
@@ -192,6 +241,47 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
             )}
           </button>
         </div>
+      </div>
+
+      {/* API Usage */}
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <div>
+            <div className={styles.cardLabel}>API Usage</div>
+            <div className={styles.cardDesc}>Credit balance and current month spend from your OpenAI account</div>
+          </div>
+        </div>
+        <div className={styles.usageGrid}>
+          <div className={styles.usageItem}>
+            <div className={styles.usageLabel}>Credits remaining</div>
+            <div className={styles.usageValue}>{formatUsd(usage?.creditsRemainingUsd ?? null)}</div>
+          </div>
+          <div className={styles.usageItem}>
+            <div className={styles.usageLabel}>Credits used</div>
+            <div className={styles.usageValue}>{formatUsd(usage?.creditsUsedUsd ?? null)}</div>
+          </div>
+          <div className={styles.usageItem}>
+            <div className={styles.usageLabel}>Credits granted</div>
+            <div className={styles.usageValue}>{formatUsd(usage?.creditsGrantedUsd ?? null)}</div>
+          </div>
+          <div className={styles.usageItem}>
+            <div className={styles.usageLabel}>This month ({usage?.periodStart ?? '—'} to {usage?.periodEnd ?? '—'})</div>
+            <div className={styles.usageValue}>{formatUsd(usage?.monthUsageUsd ?? null)}</div>
+          </div>
+        </div>
+        <div className={styles.usageFooter}>
+          <div className={styles.usageMeta}>
+            {usage ? `Last update: ${formatDateTime(usage.fetchedAt)}` : 'No usage data loaded yet'}
+          </div>
+          <button
+            className={styles.usageBtn}
+            onClick={() => void refreshUsage(apiKey)}
+            disabled={usageLoading}
+          >
+            {usageLoading ? 'Refreshing…' : 'Refresh usage'}
+          </button>
+        </div>
+        {usageError && <div className={styles.usageError}>{usageError}</div>}
       </div>
 
       {/* Microphone */}
