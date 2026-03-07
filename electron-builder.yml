@@ -1,0 +1,15 @@
+appId: com.voiceechoes.app
+productName: Voice Echoes
+directories:
+  buildResources: resources
+  output: dist
+win:
+  icon: resources/icon.ico
+  target: nsis
+extraResources:
+  - from: resources/tray-icon.png
+    to: tray-icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false

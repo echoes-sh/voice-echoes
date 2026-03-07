@@ -44,12 +44,8 @@ export function useWaveform(canvasRef: React.RefObject<HTMLCanvasElement | null>
       const barH = Math.max(3, value * centerY * 1.8)
       const x = i * (barW + gap) + gap / 2
 
-      // Teal → white gradient based on amplitude
-      const r = Math.round(value * 255)
-      const g = Math.round(200 + value * 55)
-      const b = Math.round(200 + value * 55)
-
-      cCtx.fillStyle = `rgb(${r},${g},${b})`
+      const opacity = 0.2 + value * 0.8
+      cCtx.fillStyle = `rgba(255, 255, 255, ${opacity})`
       cCtx.beginPath()
       cCtx.roundRect(x, centerY - barH, barW, barH * 2, 2)
       cCtx.fill()

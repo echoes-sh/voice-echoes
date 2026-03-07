@@ -11,12 +11,6 @@ interface PillProps {
   waveformRef: React.RefObject<WaveformHandle | null>
 }
 
-const STATE_LABELS: Record<PillState, string> = {
-  idle: '',
-  recording: 'Recording…',
-  processing: 'Processing…'
-}
-
 export default function Pill({ state, visible, waveformRef }: PillProps) {
   if (!visible) return null
 
@@ -26,7 +20,6 @@ export default function Pill({ state, visible, waveformRef }: PillProps) {
       <div className={styles.waveformContainer}>
         <Waveform ref={waveformRef} />
       </div>
-      <span className={styles.label}>{STATE_LABELS[state]}</span>
     </div>
   )
 }

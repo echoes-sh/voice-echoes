@@ -25,8 +25,8 @@ function createPill(): BrowserWindow {
   const { width: sw, height: sh } = display.workAreaSize
   const { x: ox, y: oy } = display.workArea
 
-  const pillW = 320
-  const pillH = 72
+  const pillW = 200
+  const pillH = 44
 
   const win = new BrowserWindow({
     width: pillW,

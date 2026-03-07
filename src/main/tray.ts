@@ -7,7 +7,10 @@ let tray: Tray | null = null
 export function setupTray(pill: BrowserWindow): void {
   void pill // reserved for future tray–pill interaction
 
-  const iconPath = join(__dirname, '../../resources/tray-icon.png')
+  const iconPath = join(
+    app.isPackaged ? process.resourcesPath : join(__dirname, '../../resources'),
+    'tray-icon.png'
+  )
   const icon = nativeImage.createFromPath(iconPath)
   const resized = icon.isEmpty()
     ? nativeImage.createEmpty()
