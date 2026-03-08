@@ -9,10 +9,10 @@
   flex-direction: column;
   font-family: 'Geist', 'Inter', system-ui, sans-serif;
   color: #fafafa;
-  padding: 20px;
+  padding: 20px 24px;
   gap: 10px;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow: hidden;
   position: relative;
 }
 
@@ -21,17 +21,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
-  background: #141414;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #141414 0%, #181818 100%);
   border: 1px solid #262626;
-  border-radius: 12px;
+  border-radius: 14px;
   flex-shrink: 0;
   -webkit-app-region: drag;
 }
 
 .logoWrap {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,7 +46,7 @@
 
 .appName {
   font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 400;
   color: #fafafa;
   letter-spacing: -0.02em;
@@ -57,17 +57,21 @@
 .subtitle {
   font-size: 11px;
   font-weight: 400;
-  color: #a3a3a3;
-  letter-spacing: 0.04em;
+  color: #737373;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .version {
   font-size: 10px;
   font-weight: 500;
-  color: #404040;
+  color: #525252;
   font-family: 'Geist Mono', monospace;
   letter-spacing: 0.02em;
+  background: #1a1a1a;
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid #262626;
 }
 
 .closeBtn {
@@ -75,12 +79,12 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 5px;
-  color: #404040;
+  padding: 6px;
+  color: #525252;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: color 0.15s, background 0.15s;
   margin-left: 4px;
   flex-shrink: 0;
@@ -94,11 +98,15 @@
 /* ─── Cards ─────────────────────────────────────────── */
 .card {
   background: #141414;
-  border: 1px solid #262626;
-  border-radius: 12px;
+  border: 1px solid #1e1e1e;
+  border-radius: 14px;
   padding: 14px 16px;
   flex-shrink: 0;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.2s ease;
+}
+
+.card:focus-within {
+  border-color: #333;
 }
 
 .cardHeader {
@@ -108,22 +116,31 @@
   gap: 10px;
 }
 
-.card:focus-within {
-  border-color: #404040;
+.cardLabelRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cardIcon {
+  color: #525252;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .cardLabel {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
-  color: #fafafa;
+  color: #e5e5e5;
   margin-bottom: 2px;
 }
 
 .cardDesc {
   font-size: 11px;
   color: #525252;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-weight: 400;
+  line-height: 1.3;
 }
 
 /* ─── API Key Input ─────────────────────────────────── */
@@ -135,10 +152,10 @@
 
 .input {
   width: 100%;
-  background: #0a0a0a;
+  background: #0d0d0d;
   border: 1px solid #262626;
-  border-radius: 8px;
-  padding: 8px 36px 8px 11px;
+  border-radius: 10px;
+  padding: 9px 38px 9px 12px;
   font-family: 'Geist Mono', 'Courier New', monospace;
   font-size: 11.5px;
   color: #a3a3a3;
@@ -155,96 +172,89 @@
 }
 
 .input:focus {
-  border-color: #525252;
+  border-color: #404040;
   color: #d4d4d4;
 }
 
 .eyeBtn {
   position: absolute;
-  right: 9px;
+  right: 10px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 3px;
+  padding: 4px;
   color: #404040;
   display: flex;
   align-items: center;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: color 0.15s;
 }
 
 .eyeBtn:hover { color: #a3a3a3; }
 
 /* ─── Usage Card ────────────────────────────────────── */
-.usageGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.usageItem {
-  background: #0a0a0a;
-  border: 1px solid #262626;
-  border-radius: 8px;
-  padding: 9px 10px;
-}
-
-.usageLabel {
-  font-size: 10px;
-  color: #525252;
-  margin-bottom: 4px;
-}
-
-.usageValue {
-  font-size: 12px;
-  font-weight: 500;
-  color: #fafafa;
-  letter-spacing: 0.01em;
-}
-
-.usageFooter {
+.usageRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 12px;
 }
 
-.usageMeta {
+.usagePeriod {
   font-size: 10.5px;
   color: #525252;
+  font-family: 'Geist Mono', monospace;
+  margin-top: 1px;
 }
 
-.usageBtn {
-  background: #1a1a1a;
+.usageRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.usageAmount {
+  font-size: 16px;
+  font-weight: 500;
+  color: #fafafa;
+  font-family: 'Geist Mono', monospace;
+  letter-spacing: -0.02em;
+}
+
+.usageRefreshBtn {
+  background: none;
   border: 1px solid #262626;
   border-radius: 8px;
-  padding: 6px 10px;
-  font-family: 'Geist', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: #a3a3a3;
+  padding: 5px;
+  color: #525252;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
-.usageBtn:hover {
+.usageRefreshBtn:hover {
+  color: #a3a3a3;
   border-color: #404040;
-  color: #fafafa;
-  background: #202020;
+  background: #1a1a1a;
 }
 
-.usageBtn:disabled {
-  opacity: 0.4;
+.usageRefreshBtn:disabled {
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
 .usageError {
-  margin-top: 9px;
+  margin-top: 10px;
   font-size: 10.5px;
-  color: #ef4444;
+  color: #a3a3a3;
+  line-height: 1.4;
+  padding: 8px 10px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+  border-radius: 8px;
 }
 
 /* ─── Mic Select ────────────────────────────────────── */
@@ -258,10 +268,10 @@
   width: 100%;
   appearance: none;
   -webkit-appearance: none;
-  background: #0a0a0a;
+  background: #0d0d0d;
   border: 1px solid #262626;
-  border-radius: 8px;
-  padding: 8px 32px 8px 11px;
+  border-radius: 10px;
+  padding: 9px 34px 9px 12px;
   font-family: 'Geist', sans-serif;
   font-size: 12px;
   color: #a3a3a3;
@@ -270,13 +280,13 @@
   transition: border-color 0.15s;
 }
 
-.select:focus  { border-color: #525252; }
+.select:focus  { border-color: #404040; }
 .select:disabled { opacity: 0.35; cursor: not-allowed; }
 .select option { background: #141414; color: #fafafa; }
 
 .selectArrow {
   position: absolute;
-  right: 10px;
+  right: 11px;
   pointer-events: none;
   color: #404040;
   display: flex;
@@ -292,10 +302,10 @@
 
 .hotkeyInput {
   flex: 1;
-  background: #0a0a0a;
+  background: #0d0d0d;
   border: 1px solid #262626;
-  border-radius: 8px;
-  padding: 8px 11px;
+  border-radius: 10px;
+  padding: 9px 12px;
   font-family: 'Geist Mono', monospace;
   font-size: 12px;
   font-weight: 500;
@@ -328,8 +338,8 @@
 .recordBtn {
   background: #1a1a1a;
   border: 1px solid #262626;
-  border-radius: 8px;
-  padding: 7px 11px;
+  border-radius: 10px;
+  padding: 8px 14px;
   font-family: 'Geist', sans-serif;
   font-size: 11px;
   font-weight: 500;
@@ -358,7 +368,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 6px;
+  padding-top: 4px;
+  margin-top: auto;
   flex-shrink: 0;
 }
 
@@ -388,10 +399,10 @@
 .saveBtn {
   background: #fafafa;
   border: 1px solid #fafafa;
-  border-radius: 8px;
-  padding: 8px 24px;
+  border-radius: 10px;
+  padding: 9px 28px;
   font-family: 'Geist', sans-serif;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   color: #0a0a0a;
   cursor: pointer;

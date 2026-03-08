@@ -13,9 +13,6 @@ declare global {
 
       settingsGet: () => Promise<{ apiKey: string; hotkey: string; deviceId: string }>
       settingsUsage: (apiKey?: string) => Promise<{
-        creditsGrantedUsd: number | null
-        creditsUsedUsd: number | null
-        creditsRemainingUsd: number | null
         monthUsageUsd: number | null
         periodStart: string
         periodEnd: string

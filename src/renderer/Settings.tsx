@@ -15,10 +15,7 @@ interface AudioDevice {
 
 type StatusState = { type: 'success' | 'error'; message: string } | null
 
-interface OpenAIUsageSnapshot {
-  creditsGrantedUsd: number | null
-  creditsUsedUsd: number | null
-  creditsRemainingUsd: number | null
+interface UsageSnapshot {
   monthUsageUsd: number | null
   periodStart: string
   periodEnd: string
@@ -35,8 +32,7 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
   const [recording, setRecording] = useState(false)
   const [status, setStatus]     = useState<StatusState>(null)
   const [saving, setSaving]     = useState(false)
-  const [usage, setUsage]       = useState<OpenAIUsageSnapshot | null>(null)
-  const [usageError, setUsageError] = useState<string | null>(null)
+  const [usage, setUsage]       = useState<UsageSnapshot | null>(null)
   const [usageLoading, setUsageLoading] = useState(false)
   const hotkeyInputRef = useRef<HTMLInputElement>(null)
 
@@ -45,21 +41,31 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 2
+      maximumFractionDigits: 4
     }).format(value)
   }, [])
 
-  const formatDateTime = useCallback((iso: string) => {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return 'Unknown'
-    return d.toLocaleString()
+  const refreshUsage = useCallback(async (key: string) => {
+    if (!key.trim()) return
+    setUsageLoading(true)
+    try {
+      const snapshot = await window.electronAPI.settingsUsage(key.trim())
+      setUsage(snapshot)
+    } catch (err) {
+      setUsage({ monthUsageUsd: null, periodStart: '', periodEnd: '', fetchedAt: '', error: (err as Error).message })
+    } finally {
+      setUsageLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    if (initialKey.trim()) void refreshUsage(initialKey)
+  }, [initialKey, refreshUsage])
 
   // ── Enumerate audio inputs ─────────────────────────────
   useEffect(() => {
     async function loadDevices() {
       try {
-        // Try getting permission first
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
         stream.getTracks().forEach((t) => t.stop())
       } catch (err) {
@@ -84,25 +90,6 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
     }
     loadDevices()
   }, [initialDeviceId])
-
-  const refreshUsage = useCallback(async (targetApiKey: string) => {
-    setUsageLoading(true)
-    setUsageError(null)
-    try {
-      const snapshot = await window.electronAPI.settingsUsage(targetApiKey.trim())
-      setUsage(snapshot)
-      setUsageError(snapshot.error ?? null)
-    } catch (err) {
-      setUsageError((err as Error).message)
-    } finally {
-      setUsageLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!initialKey.trim()) return
-    void refreshUsage(initialKey)
-  }, [initialKey, refreshUsage])
 
   // ── Key recorder ──────────────────────────────────────
   const startRecording = useCallback(() => {
@@ -136,7 +123,6 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
         ';': 'Semicolon', "'": 'Quote', ',': 'Comma',
         '.': 'Period',
       }
-      // Use e.code for reliable mapping of symbol keys
       const codeMap: Record<string, string> = {
         Backquote: 'Backquote', Minus: 'Minus', Equal: 'Equal',
         BracketLeft: 'BracketLeft', BracketRight: 'BracketRight',
@@ -194,7 +180,7 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
           <div className={styles.appName}>Voice Echoes</div>
           <div className={styles.subtitle}>Settings</div>
         </div>
-        <div className={styles.version}>v1.0</div>
+        <div className={styles.version}>v1.0.4</div>
         <button
           className={styles.closeBtn}
           onClick={() => window.electronAPI.closeWindow()}
@@ -210,9 +196,14 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
       {/* API Key */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <div>
-            <div className={styles.cardLabel}>OpenAI API Key</div>
-            <div className={styles.cardDesc}>Used for Whisper speech-to-text transcription</div>
+          <div className={styles.cardLabelRow}>
+            <svg className={styles.cardIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+            </svg>
+            <div>
+              <div className={styles.cardLabel}>OpenAI API Key</div>
+              <div className={styles.cardDesc}>Used for Whisper speech-to-text</div>
+            </div>
           </div>
         </div>
         <div className={styles.inputWrap}>
@@ -243,53 +234,54 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
         </div>
       </div>
 
-      {/* API Usage */}
+      {/* Usage */}
       <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <div>
-            <div className={styles.cardLabel}>API Usage</div>
-            <div className={styles.cardDesc}>Credit balance and current month spend from your OpenAI account</div>
+        <div className={styles.usageRow}>
+          <div className={styles.cardLabelRow}>
+            <svg className={styles.cardIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 20V10M18 20V4M6 20v-4"/>
+            </svg>
+            <div>
+              <div className={styles.cardLabel}>API Usage</div>
+              <div className={styles.usagePeriod}>
+                {usage ? `${usage.periodStart} — ${usage.periodEnd}` : 'Current month'}
+              </div>
+            </div>
+          </div>
+          <div className={styles.usageRight}>
+            <div className={styles.usageAmount}>
+              {usageLoading ? '…' : formatUsd(usage?.monthUsageUsd ?? null)}
+            </div>
+            <button
+              className={styles.usageRefreshBtn}
+              onClick={() => void refreshUsage(apiKey)}
+              disabled={usageLoading || !apiKey.trim()}
+              title="Refresh usage"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </button>
           </div>
         </div>
-        <div className={styles.usageGrid}>
-          <div className={styles.usageItem}>
-            <div className={styles.usageLabel}>Credits remaining</div>
-            <div className={styles.usageValue}>{formatUsd(usage?.creditsRemainingUsd ?? null)}</div>
-          </div>
-          <div className={styles.usageItem}>
-            <div className={styles.usageLabel}>Credits used</div>
-            <div className={styles.usageValue}>{formatUsd(usage?.creditsUsedUsd ?? null)}</div>
-          </div>
-          <div className={styles.usageItem}>
-            <div className={styles.usageLabel}>Credits granted</div>
-            <div className={styles.usageValue}>{formatUsd(usage?.creditsGrantedUsd ?? null)}</div>
-          </div>
-          <div className={styles.usageItem}>
-            <div className={styles.usageLabel}>This month ({usage?.periodStart ?? '—'} to {usage?.periodEnd ?? '—'})</div>
-            <div className={styles.usageValue}>{formatUsd(usage?.monthUsageUsd ?? null)}</div>
-          </div>
-        </div>
-        <div className={styles.usageFooter}>
-          <div className={styles.usageMeta}>
-            {usage ? `Last update: ${formatDateTime(usage.fetchedAt)}` : 'No usage data loaded yet'}
-          </div>
-          <button
-            className={styles.usageBtn}
-            onClick={() => void refreshUsage(apiKey)}
-            disabled={usageLoading}
-          >
-            {usageLoading ? 'Refreshing…' : 'Refresh usage'}
-          </button>
-        </div>
-        {usageError && <div className={styles.usageError}>{usageError}</div>}
+        {usage?.error && <div className={styles.usageError}>{usage.error}</div>}
       </div>
 
       {/* Microphone */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <div>
-            <div className={styles.cardLabel}>Microphone</div>
-            <div className={styles.cardDesc}>Audio input device for recording</div>
+          <div className={styles.cardLabelRow}>
+            <svg className={styles.cardIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+            <div>
+              <div className={styles.cardLabel}>Microphone</div>
+              <div className={styles.cardDesc}>Audio input device for recording</div>
+            </div>
           </div>
         </div>
         <div className={styles.selectWrap}>
@@ -319,9 +311,15 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
       {/* Hotkey */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <div>
-            <div className={styles.cardLabel}>Recording Hotkey</div>
-            <div className={styles.cardDesc}>Global key to start / stop recording</div>
+          <div className={styles.cardLabelRow}>
+            <svg className={styles.cardIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+            </svg>
+            <div>
+              <div className={styles.cardLabel}>Recording Hotkey</div>
+              <div className={styles.cardDesc}>Global key to start / stop recording</div>
+            </div>
           </div>
         </div>
         <div className={styles.hotkeyWrap}>
@@ -337,7 +335,7 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
             className={`${styles.recordBtn}${recording ? ` ${styles.active}` : ''}`}
             onClick={startRecording}
           >
-            {recording ? '● Listening…' : 'Set key'}
+            {recording ? 'Listening…' : 'Set key'}
           </button>
         </div>
       </div>

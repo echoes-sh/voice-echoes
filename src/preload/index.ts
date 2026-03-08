@@ -23,9 +23,6 @@ const electronAPI = {
     return ipcRenderer.invoke('settings:get')
   },
   settingsUsage: (apiKey?: string): Promise<{
-    creditsGrantedUsd: number | null
-    creditsUsedUsd: number | null
-    creditsRemainingUsd: number | null
     monthUsageUsd: number | null
     periodStart: string
     periodEnd: string
