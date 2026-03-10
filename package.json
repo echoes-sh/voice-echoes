@@ -30,6 +30,17 @@
         { "target": "deb", "arch": ["x64"] }
       ],
       "category": "Utility"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
     }
   },
   "dependencies": {
