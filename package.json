@@ -2,6 +2,10 @@
   "name": "voice-echoes",
   "version": "1.0.5",
   "description": "Voice-to-text desktop app with system tray",
+  "author": {
+    "name": "ITBenko",
+    "email": "itbenko@users.noreply.github.com"
+  },
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
