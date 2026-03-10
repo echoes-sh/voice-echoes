@@ -4,7 +4,7 @@
   "description": "Voice-to-text desktop app with system tray",
   "author": {
     "name": "ITBenko",
-    "email": "itbenko@users.noreply.github.com"
+    "email": "contact@echoes.sh"
   },
   "main": "out/main/index.js",
   "scripts": {
