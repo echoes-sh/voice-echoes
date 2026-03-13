@@ -17,6 +17,7 @@ type StatusState = { type: 'success' | 'error'; message: string } | null
 
 interface UsageSnapshot {
   monthUsageUsd: number | null
+  creditRemainingUsd: number | null
   periodStart: string
   periodEnd: string
   fetchedAt: string
@@ -32,6 +33,7 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
   const [recording, setRecording] = useState(false)
   const [status, setStatus]     = useState<StatusState>(null)
   const [saving, setSaving]     = useState(false)
+  const [autoLaunch, setAutoLaunch] = useState(false)
   const [usage, setUsage]       = useState<UsageSnapshot | null>(null)
   const [usageLoading, setUsageLoading] = useState(false)
   const hotkeyInputRef = useRef<HTMLInputElement>(null)
@@ -90,6 +92,17 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
     }
     loadDevices()
   }, [initialDeviceId])
+
+  // ── Auto-launch ─────────────────────────────────────
+  useEffect(() => {
+    window.electronAPI.getAutoLaunch().then(setAutoLaunch)
+  }, [])
+
+  const handleAutoLaunchToggle = useCallback(async () => {
+    const next = !autoLaunch
+    setAutoLaunch(next)
+    await window.electronAPI.setAutoLaunch(next)
+  }, [autoLaunch])
 
   // ── Key recorder ──────────────────────────────────────
   const startRecording = useCallback(() => {
@@ -180,7 +193,7 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
           <div className={styles.appName}>Voice Echoes</div>
           <div className={styles.subtitle}>Settings</div>
         </div>
-        <div className={styles.version}>v1.0.4</div>
+        <div className={styles.version}>v1.0.6</div>
         <button
           className={styles.closeBtn}
           onClick={() => window.electronAPI.closeWindow()}
@@ -265,6 +278,14 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
             </button>
           </div>
         </div>
+        {usage && (
+          <div className={styles.creditRow}>
+            <span className={styles.creditLabel}>Credit left</span>
+            <span className={styles.creditAmount}>
+              {usageLoading ? '…' : formatUsd(usage.creditRemainingUsd ?? null)}
+            </span>
+          </div>
+        )}
         {usage?.error && <div className={styles.usageError}>{usage.error}</div>}
       </div>
 
@@ -336,6 +357,31 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
             onClick={startRecording}
           >
             {recording ? 'Listening…' : 'Set key'}
+          </button>
+        </div>
+      </div>
+
+      {/* Start at Login */}
+      <div className={styles.card}>
+        <div className={styles.toggleRow}>
+          <div className={styles.cardLabelRow}>
+            <svg className={styles.cardIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            <div>
+              <div className={styles.cardLabel}>Start at Login</div>
+              <div className={styles.toggleDesc}>Automatically launch when you log in</div>
+            </div>
+          </div>
+          <button
+            className={`${styles.toggle} ${autoLaunch ? styles.toggleOn : ''}`}
+            onClick={handleAutoLaunchToggle}
+            role="switch"
+            aria-checked={autoLaunch}
+          >
+            <span className={styles.toggleThumb} />
           </button>
         </div>
       </div>

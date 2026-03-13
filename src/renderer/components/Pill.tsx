@@ -16,7 +16,6 @@ export default function Pill({ state, visible, deviceId, onStreamReady, onStream
 
   return (
     <div className={styles.pill}>
-      <div className={`${styles.dot} ${styles[state]}`} />
       <div className={styles.waveformContainer}>
         <LiveWaveform
           active={state === 'recording'}

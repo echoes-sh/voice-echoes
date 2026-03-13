@@ -72,10 +72,10 @@ export function openSettings(): void {
   const { x: ox, y: oy, width: sw, height: sh } = display.workArea
 
   settingsWin = new BrowserWindow({
-    width: 520,
-    height: 540,
-    x: ox + Math.round((sw - 520) / 2),
-    y: oy + Math.round((sh - 540) / 2),
+    width: 560,
+    height: 700,
+    x: ox + Math.round((sw - 560) / 2),
+    y: oy + Math.round((sh - 700) / 2),
     frame: false,
     transparent: true,
     resizable: false,

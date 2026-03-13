@@ -9,7 +9,8 @@
   flex-direction: column;
   font-family: 'Geist', 'Inter', system-ui, sans-serif;
   color: #fafafa;
-  padding: 20px 24px;
+  padding: 20px 24px 40px;
+  border-radius: 16px;
   gap: 10px;
   box-sizing: border-box;
   overflow: hidden;
@@ -246,6 +247,28 @@
   cursor: not-allowed;
 }
 
+.creditRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #1e1e1e;
+}
+
+.creditLabel {
+  font-size: 11px;
+  color: #525252;
+}
+
+.creditAmount {
+  font-size: 14px;
+  font-weight: 500;
+  color: #22c55e;
+  font-family: 'Geist Mono', monospace;
+  letter-spacing: -0.02em;
+}
+
 .usageError {
   margin-top: 10px;
   font-size: 10.5px;
@@ -255,6 +278,8 @@
   background: rgba(239, 68, 68, 0.06);
   border: 1px solid rgba(239, 68, 68, 0.12);
   border-radius: 8px;
+  max-height: 48px;
+  overflow-y: auto;
 }
 
 /* ─── Mic Select ────────────────────────────────────── */
@@ -362,14 +387,72 @@
   color: #00c8c8;
 }
 
+/* ─── Toggle Row ───────────────────────────────────── */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toggleDesc {
+  font-size: 11px;
+  color: #525252;
+  font-weight: 400;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+.toggle {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 11px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.toggle:hover {
+  border-color: #404040;
+}
+
+.toggleOn {
+  background: #00c8c8;
+  border-color: #00c8c8;
+}
+
+.toggleOn:hover {
+  background: #00b0b0;
+  border-color: #00b0b0;
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #737373;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.toggleOn .toggleThumb {
+  transform: translateX(16px);
+  background: #0a0a0a;
+}
+
 /* ─── Footer ────────────────────────────────────────── */
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 4px;
-  margin-top: auto;
+  padding-top: 10px;
   flex-shrink: 0;
 }
 

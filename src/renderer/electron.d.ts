@@ -14,12 +14,15 @@ declare global {
       settingsGet: () => Promise<{ apiKey: string; hotkey: string; deviceId: string }>
       settingsUsage: (apiKey?: string) => Promise<{
         monthUsageUsd: number | null
+        creditRemainingUsd: number | null
         periodStart: string
         periodEnd: string
         fetchedAt: string
         error?: string
       }>
       settingsSave: (apiKey: string, hotkey: string, deviceId: string) => Promise<{ error?: string }>
+      getAutoLaunch: () => Promise<boolean>
+      setAutoLaunch: (enabled: boolean) => Promise<void>
       closeWindow: () => void
     }
   }

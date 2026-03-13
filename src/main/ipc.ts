@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, globalShortcut } from 'electron'
+import { ipcMain, app, BrowserWindow, globalShortcut } from 'electron'
 
 import { transcribeAudio } from './transcribe'
 import { typeIntoWindow } from './focus'
@@ -11,6 +11,14 @@ export function registerIpcHandlers(pill: BrowserWindow): void {
 
   ipcMain.handle('settings:usage', (_event, apiKey?: string) => {
     return fetchOpenAIUsage(apiKey)
+  })
+
+  ipcMain.handle('settings:get-auto-launch', () => {
+    return app.getLoginItemSettings().openAtLogin
+  })
+
+  ipcMain.handle('settings:set-auto-launch', (_event, enabled: boolean) => {
+    app.setLoginItemSettings({ openAtLogin: enabled })
   })
 
   ipcMain.on('window:close', (event) => {

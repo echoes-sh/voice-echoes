@@ -11,8 +11,15 @@ interface OrganizationCostsResponse {
   data?: CostsBucket[]
 }
 
+interface CreditGrantsResponse {
+  total_granted?: number
+  total_used?: number
+  total_available?: number
+}
+
 export interface OpenAIUsageSnapshot {
   monthUsageUsd: number | null
+  creditRemainingUsd: number | null
   periodStart: string
   periodEnd: string
   fetchedAt: string
@@ -31,6 +38,7 @@ export async function fetchOpenAIUsage(apiKeyOverride?: string): Promise<OpenAIU
   if (!apiKey) {
     return {
       monthUsageUsd: null,
+      creditRemainingUsd: null,
       periodStart: startDate,
       periodEnd: endDate,
       fetchedAt: now.toISOString(),
@@ -41,37 +49,50 @@ export async function fetchOpenAIUsage(apiKeyOverride?: string): Promise<OpenAIU
   const startTime = Math.floor(periodStart.getTime() / 1000)
   const endTime = Math.floor(periodEndExclusive.getTime() / 1000)
 
+  let monthUsageUsd: number | null = null
+  let creditRemainingUsd: number | null = null
+  const errors: string[] = []
+
+  // Fetch monthly costs
   try {
     const url = `https://api.openai.com/v1/organization/costs?start_time=${startTime}&end_time=${endTime}`
     const data = await requestJson<OrganizationCostsResponse>(url, apiKey)
-
-    const total = (data.data ?? []).reduce((sum, bucket) => {
+    monthUsageUsd = (data.data ?? []).reduce((sum, bucket) => {
       return sum + (typeof bucket.amount?.value === 'number' ? bucket.amount.value : 0)
     }, 0)
+  } catch (err) {
+    errors.push((err as Error).message)
+  }
 
-    return {
-      monthUsageUsd: total,
-      periodStart: startDate,
-      periodEnd: endDate,
-      fetchedAt: now.toISOString()
+  // Fetch credit balance
+  try {
+    const credits = await requestJson<CreditGrantsResponse>(
+      'https://api.openai.com/dashboard/billing/credit_grants',
+      apiKey,
+      {
+        'User-Agent': 'Mozilla/5.0',
+        'Origin': 'https://platform.openai.com',
+        'Referer': 'https://platform.openai.com/'
+      }
+    )
+    if (typeof credits.total_available === 'number') {
+      creditRemainingUsd = credits.total_available
     }
   } catch (err) {
-    const message = (err as Error).message
-    const isPermission = message.includes('403') || message.includes('permission') || message.includes('admin')
+    console.log('[usage] credit_grants failed:', (err as Error).message)
+  }
 
-    return {
-      monthUsageUsd: null,
-      periodStart: startDate,
-      periodEnd: endDate,
-      fetchedAt: now.toISOString(),
-      error: isPermission
-        ? 'Requires an admin API key. Create one at platform.openai.com/api-keys with the "Usage: Read" permission.'
-        : message
-    }
+  return {
+    monthUsageUsd,
+    creditRemainingUsd,
+    periodStart: startDate,
+    periodEnd: endDate,
+    fetchedAt: now.toISOString(),
+    error: errors.length > 0 ? errors.join('; ') : undefined
   }
 }
 
-async function requestJson<T>(url: string, apiKey: string): Promise<T> {
+async function requestJson<T>(url: string, apiKey: string, extraHeaders?: Record<string, string>): Promise<T> {
   return new Promise((resolve, reject) => {
     const req = https.request(
       url,
@@ -79,7 +100,8 @@ async function requestJson<T>(url: string, apiKey: string): Promise<T> {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...extraHeaders
         }
       },
       (res) => {

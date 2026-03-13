@@ -24,6 +24,7 @@ const electronAPI = {
   },
   settingsUsage: (apiKey?: string): Promise<{
     monthUsageUsd: number | null
+    creditRemainingUsd: number | null
     periodStart: string
     periodEnd: string
     fetchedAt: string
@@ -33,6 +34,13 @@ const electronAPI = {
   },
   settingsSave: (apiKey: string, hotkey: string, deviceId: string): Promise<{ error?: string }> => {
     return ipcRenderer.invoke('settings:save', apiKey, hotkey, deviceId)
+  },
+
+  getAutoLaunch: (): Promise<boolean> => {
+    return ipcRenderer.invoke('settings:get-auto-launch')
+  },
+  setAutoLaunch: (enabled: boolean): Promise<void> => {
+    return ipcRenderer.invoke('settings:set-auto-launch', enabled)
   },
 
   closeWindow: () => {
