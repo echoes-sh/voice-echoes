@@ -25,8 +25,13 @@
       "output": "dist"
     },
     "files": [
-      "out/**/*",
-      "resources/**/*"
+      "out/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/tray-icon.png",
+        "to": "tray-icon.png"
+      }
     ],
     "linux": {
       "target": [

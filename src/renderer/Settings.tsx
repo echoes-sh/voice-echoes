@@ -120,30 +120,33 @@ export default function Settings({ initialKey, initialHotkey, initialDeviceId, o
       if (e.ctrlKey)  modifiers.push('Ctrl')
       if (e.altKey)   modifiers.push('Alt')
       if (e.shiftKey) modifiers.push('Shift')
-      if (e.metaKey)  modifiers.push('Super')
+      if (e.metaKey)  modifiers.push(navigator.platform.startsWith('Mac') ? 'Command' : 'Super')
 
       const skip = ['Control', 'Alt', 'Shift', 'Meta', 'AltGraph']
       if (skip.includes(e.key)) return
 
-      const keyMap: Record<string, string> = {
-        ' ': 'Space', ArrowUp: 'Up', ArrowDown: 'Down',
+      // Map physical key codes to Electron accelerator names
+      const codeMap: Record<string, string> = {
+        Space: 'Space', ArrowUp: 'Up', ArrowDown: 'Down',
         ArrowLeft: 'Left', ArrowRight: 'Right',
         Escape: 'Escape', Tab: 'Tab', Enter: 'Return',
         Backspace: 'Backspace', Delete: 'Delete',
-        '\\': 'Backslash', '/': 'Slash',
-        '[': 'BracketLeft', ']': 'BracketRight',
-        '`': 'Backquote', '-': 'Minus', '=': 'Equal',
-        ';': 'Semicolon', "'": 'Quote', ',': 'Comma',
-        '.': 'Period',
+        Slash: '/', Backslash: '\\', BracketLeft: '[', BracketRight: ']',
+        Backquote: '`', Minus: '-', Equal: '=',
+        Semicolon: ';', Quote: "'", Comma: ',', Period: '.',
       }
-      const codeMap: Record<string, string> = {
-        Backquote: 'Backquote', Minus: 'Minus', Equal: 'Equal',
-        BracketLeft: 'BracketLeft', BracketRight: 'BracketRight',
-        Backslash: 'Backslash', Semicolon: 'Semicolon',
-        Quote: 'Quote', Comma: 'Comma', Period: 'Period',
-        Slash: 'Slash',
+      let mapped: string
+      if (codeMap[e.code]) {
+        mapped = codeMap[e.code]
+      } else if (e.code.startsWith('Key')) {
+        mapped = e.code.slice(3) // KeyA -> A
+      } else if (e.code.startsWith('Digit')) {
+        mapped = e.code.slice(5) // Digit1 -> 1
+      } else if (e.code.startsWith('F') && /^F\d+$/.test(e.code)) {
+        mapped = e.code // F1, F2, etc.
+      } else {
+        mapped = e.code
       }
-      const mapped = keyMap[e.key] ?? codeMap[e.code] ?? (e.key.length === 1 ? e.key.toUpperCase() : e.key)
       modifiers.push(mapped)
       setHotkey(modifiers.join('+'))
       setRecording(false)

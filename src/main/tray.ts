@@ -16,6 +16,10 @@ export function setupTray(pill: BrowserWindow): void {
     ? nativeImage.createEmpty()
     : icon.resize({ width: 22, height: 22 })
 
+  if (process.platform === 'darwin') {
+    resized.setTemplateImage(true)
+  }
+
   tray = new Tray(resized)
   tray.setToolTip('Voice Echoes')
 

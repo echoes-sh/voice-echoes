@@ -1,4 +1,4 @@
-import { globalShortcut, BrowserWindow } from 'electron'
+import { globalShortcut, BrowserWindow, screen } from 'electron'
 import { captureActiveWindow } from './focus'
 
 type AppState = 'idle' | 'recording' | 'processing'
@@ -79,6 +79,18 @@ function handleHotkey(pill: BrowserWindow): void {
     activeWindowId = captureActiveWindow()
     console.log('[hotkey] captured window:', activeWindowId)
     state = 'recording'
+
+    // Reposition pill to the current display/space
+    const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
+    const { width: sw, height: sh } = display.workAreaSize
+    const { x: ox, y: oy } = display.workArea
+    const pillW = 200
+    const pillH = 44
+    pill.setPosition(
+      ox + Math.round((sw - pillW) / 2),
+      oy + sh - pillH - 24
+    )
+
     registerCancelHotkey(pill)
     pill.showInactive()
     pill.webContents.send('recorder:start')

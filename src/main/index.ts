@@ -1,8 +1,10 @@
-import { app, BrowserWindow, screen, session } from 'electron'
+import { app, BrowserWindow, screen, session, systemPreferences } from 'electron'
 
 // Disable GPU in WSL2 — avoids GPU process crash errors, falls back to software rendering
-app.commandLine.appendSwitch('disable-gpu')
-app.commandLine.appendSwitch('disable-software-rasterizer')
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('disable-gpu')
+  app.commandLine.appendSwitch('disable-software-rasterizer')
+}
 
 import { join } from 'path'
 import { config } from 'dotenv'
@@ -41,6 +43,7 @@ function createPill(): BrowserWindow {
     focusable: false,
     type: 'toolbar',
     show: false,
+    visibleOnAllWorkspaces: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -122,6 +125,21 @@ app.whenReady().then(() => {
     return allowed.includes(permission)
   })
   session.defaultSession.setDevicePermissionHandler(() => true)
+
+  // Prompt for accessibility permission on macOS (needed for global shortcuts)
+  if (process.platform === 'darwin') {
+    const trusted = systemPreferences.isTrustedAccessibilityClient(true)
+    console.log('[a11y] Accessibility trusted:', trusted)
+
+    // Prompt for microphone permission on macOS
+    const micStatus = systemPreferences.getMediaAccessStatus('microphone')
+    console.log('[mic] Microphone access status:', micStatus)
+    if (micStatus !== 'granted') {
+      systemPreferences.askForMediaAccess('microphone').then((granted) => {
+        console.log('[mic] Microphone access granted:', granted)
+      })
+    }
+  }
 
   pill = createPill()
 
